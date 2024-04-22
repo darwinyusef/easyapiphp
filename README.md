@@ -1,9 +1,13 @@
-<?php
+# Este es codigo PHP Disponible para gestionar Apis Rapidas
+
+Es posible crear api rest usando solo php sin intermediarios ni frameworks si requieres algo utra rapido
+
+```php
 class InicioController
 {
     public function index()
     {
-        // get Queries
+        // Captura el body tipo { "info": "info", "email": "sender@aquicreamos.com" }
         $body = file_get_contents('php://input');
         $datosJson = json_decode($body, true);
         $info = isset($datosJson['info']) ? $datosJson['info'] : '';
@@ -29,3 +33,5 @@ class InicioController
         // exit();
     }
 }
+```
+

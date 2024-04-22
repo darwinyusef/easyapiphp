@@ -5,14 +5,30 @@ $rutas = [
     '/' => 'InicioController@index',
     '/acerca-de' => 'AcercaDeController@mostrar',
     '/contacto' => 'ContactoController@contacto',
+    '/productos/todos' => 'ProductoController@getAllProducts',
+    '/producto' => 'ProductoController@getOnlyProduct',
+    '/crear-producto' => 'ProductoController@postProduct',
 ];
 
-// Obtener la URL actual
+$actualfolder = 'prCrud';
+// Obtener la URL actual se debe incluir la carpeta base
 $uri = str_replace(
-    '/prCrud/api.php',
+    '/' . $actualfolder . '/api.php',
     '',
     parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH)
 );
+
+// obtiene los parametros de ruta basicos de tipo int o string para agregar a los metodos
+$param = null;
+$paramExplode = explode('/', $uri);
+// Capturar el parámetro de la URL
+$paramCount = count($paramExplode);
+if ($paramCount > 2) {
+    if ($paramExplode[2] != 'todos') {
+        $param = $paramExplode[2];
+        $uri = '/' . $paramExplode[1];
+    }
+}
 
 // Validar si la URL existe en las rutas
 if (array_key_exists($uri, $rutas)) {
@@ -21,9 +37,11 @@ if (array_key_exists($uri, $rutas)) {
     $partes = explode('@', $controladorYMetodo);
     $controlador = $partes[0];
     $metodo = $partes[1];
+
+    // Capturar el parámetro de la URL
     // Incluir el controlador y llamar al método
     if (file_exists("controllers/$controlador.php")) {
-        getController($controlador, $metodo);
+        getController($controlador, $metodo, $param);
     } else {
         echo "Error: Controlador $controlador no encontrado";
     }
@@ -31,15 +49,24 @@ if (array_key_exists($uri, $rutas)) {
     $controlador = 'ExceptionsController';
     $metodo = 'index';
     http_response_code(404);
-    getController($controlador, $metodo);
+    $id = null;
+    getController($controlador, $metodo, $id);
 }
 
-function getController($controlador, $metodo)
+function getController($controlador, $metodo, $param)
 {
     include_once "controllers/$controlador.php";
-    if (method_exists($controlador, $metodo)) {
+
+    if (
+        /* `method_exists` is a PHP function that checks if a method exists in a certain class. It
+    takes two parameters: the class name and the method name. If the method exists in the class,
+    it returns `true`; otherwise, it returns `false`. In the provided code, `method_exists` is
+    used to check if a specific method exists in the controller class before calling it. */
+        method_exists($controlador, $metodo)
+    ) {
         try {
-            call_user_func([new $controlador(), $metodo]);
+            // var_dump($controlador, $metodo, $param);
+            call_user_func([new $controlador(), $metodo], $param);
         } catch (Exception $e) {
             $codigoError = $e->getCode();
             $mensajeError = $e->getMessage();
@@ -51,7 +78,8 @@ function getController($controlador, $metodo)
                     http_response_code(404);
                     $controlador = 'ExceptionsController';
                     $metodo = 'index';
-                    getController($controlador, $metodo);
+                    $id = null;
+                    getController($controlador, $metodo, $id);
                     break;
                 // Mostrar un código de error HTTP renderizando una view 500
                 case 500:
@@ -59,11 +87,12 @@ function getController($controlador, $metodo)
                     http_response_code(500);
                     $controlador = 'ExceptionsController';
                     $metodo = 'errorquinientos';
-                    getController($controlador, $metodo);
+                    $id = null;
+                    getController($controlador, $metodo, $id);
                     break;
                 default:
                     // Mostrar un código de error HTTP lanzando un json
-                    header('HTTP/1.1' . $codigoError . $mensajeError);
+                    http_response_code($codigoError);
                     echo json_encode([
                         'error' => $e->getMessage(),
                         'codigo' => $codigoError,

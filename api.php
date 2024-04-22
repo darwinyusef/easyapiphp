@@ -36,50 +36,44 @@ if (array_key_exists($uri, $rutas)) {
 
 function getController($controlador, $metodo)
 {
-    try {
-        include_once "controllers/$controlador.php";
-        if (method_exists($controlador, $metodo)) {
-            try {
-                call_user_func([new $controlador(), $metodo]);
-            } catch (Exception $e) {
-                $codigoError = $e->getCode();
-                $mensajeError = $e->getMessage();
+    include_once "controllers/$controlador.php";
+    if (method_exists($controlador, $metodo)) {
+        try {
+            call_user_func([new $controlador(), $metodo]);
+        } catch (Exception $e) {
+            $codigoError = $e->getCode();
+            $mensajeError = $e->getMessage();
 
-                switch ($codigoError) {
-                    // Mostrar un código de error HTTP renderizando una view 404
-                    case 404:
-                        header('HTTP/1.1 404 Not Found');
-                        http_response_code(404);
-                        $controlador = 'ExceptionsController';
-                        $metodo = 'index';
-                        getController($controlador, $metodo);
-                        break;
-                    // Mostrar un código de error HTTP renderizando una view 500
-                    case 500:
-                        header('HTTP/1.1 501 Internal Server Error');
-                        http_response_code(500);
-                        $controlador = 'ExceptionsController';
-                        $metodo = 'errorquinientos';
-                        getController($controlador, $metodo);
-                        break;
-                    default:
-                        // Mostrar un código de error HTTP lanzando un json
-                        header('HTTP/1.1' . $codigoError . $mensajeError);
-                        echo json_encode([
-                            'error' => $e->getMessage(),
-                            'codigo' => $codigoError,
-                            'mensaje' => $mensajeError,
-                        ]);
-                }
-
-                exit(); // Detener la ejecución del script
+            switch ($codigoError) {
+                // Mostrar un código de error HTTP renderizando una view 404
+                case 404:
+                    header('HTTP/1.1 404 Not Found');
+                    http_response_code(404);
+                    $controlador = 'ExceptionsController';
+                    $metodo = 'index';
+                    getController($controlador, $metodo);
+                    break;
+                // Mostrar un código de error HTTP renderizando una view 500
+                case 500:
+                    header('HTTP/1.1 501 Internal Server Error');
+                    http_response_code(500);
+                    $controlador = 'ExceptionsController';
+                    $metodo = 'errorquinientos';
+                    getController($controlador, $metodo);
+                    break;
+                default:
+                    // Mostrar un código de error HTTP lanzando un json
+                    header('HTTP/1.1' . $codigoError . $mensajeError);
+                    echo json_encode([
+                        'error' => $e->getMessage(),
+                        'codigo' => $codigoError,
+                        'mensaje' => $mensajeError,
+                    ]);
             }
-        } else {
-            echo "Error: Método $metodo no encontrado en el controlador $controlador";
-        }
-    } catch (Exception $e) {
-        // Capturar la excepción
 
-        // Mostrar mensaje de error personalizado según el código
+            exit(); // Detener la ejecución del script
+        }
+    } else {
+        echo "Error: Método $metodo no encontrado en el controlador $controlador";
     }
 }
